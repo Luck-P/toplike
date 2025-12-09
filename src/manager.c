@@ -246,5 +246,4 @@ void manager_run(int argc, char *argv[]) {
         sleep(config.collect_local ? 2 : 5);
     }
 
-    ui_cleanup();
 }

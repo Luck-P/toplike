@@ -49,15 +49,6 @@ void print_process(const ProcessInfo *info, int is_initial_run) {
     }
 }
 
-// 4. Fonctions d'initialisation et de rafraîchissement
-void ui_init(void) {
-    // Futures initialisations ncurses...
-}
-
-void ui_cleanup(void) {
-    // Futur nettoyage ncurses...
-}
-
 void ui_refresh_process_list(ProcessInfo processes[], int count, int is_initial_run) {
     system("clear"); // Sera remplacé par ncurses plus tard
     print_header();
