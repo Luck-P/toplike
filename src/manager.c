@@ -6,6 +6,7 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
 #include "manager.h"
 #include "process.h"
 #include "ui.h"
@@ -92,8 +93,23 @@ void parse_config_file(const char *path, ManagerConfig *cfg) {
     fclose(f);
 }
 
-// --- Fonction Principale ---
+//fonction gestion du rafraichissement
+void stopwatch_init(time_t *lasttime) {
+    *lasttime = time(NULL);
+}
 
+int refresh_check(time_t *lasttime, int sec_interval){
+    time_t cur_time = time(NULL);
+    if (difftime(cur_time, *lasttime) >= sec_interval){
+        *lasttime = cur_time; //replacing latest refresh date
+        return 1; //we refresh
+    }else{
+        return 0; //too soon
+    }
+}
+
+
+// --- Fonction Principale ---
 void manager_run(int argc, char *argv[]) {
     ManagerConfig config = {0};
     
@@ -226,24 +242,31 @@ void manager_run(int argc, char *argv[]) {
         prev_total_cpu = process_get_total_cpu_time();
     }
 
+    //initialisation de la stopwatch
+    time_t *last_time = malloc(sizeof(time_t));
+    stopwatch_init(last_time);
+
     while (1) {
         int count = 0;
-
+        if(is_first || refresh_check(last_time,config.collect_local ? 2 : 5)){
         // Collecte Locale
-        if (config.collect_local) {
-             unsigned long long curr_total = process_get_total_cpu_time();
-             count = process_collect_all(local_procs, MAX_PROCESSES, prev_total_cpu, prev_times, curr_total);
-             process_sort_by_cpu(local_procs, count);
-             prev_total_cpu = curr_total;
+            if (config.collect_local) {
+                 unsigned long long curr_total = process_get_total_cpu_time();
+                count = process_collect_all(local_procs, MAX_PROCESSES, prev_total_cpu, prev_times, curr_total);
+                process_sort_by_cpu(local_procs, count);
+                prev_total_cpu = curr_total;
              
-             ui_refresh_process_list(local_procs, count, is_first);
-        }
-
+                ui_refresh_process_list(local_procs, count, is_first);
+            }
+        
         // Collecte Distante (Placeholder)
         // for(int i=0; i<config.host_count; i++) { network_collect(&config.hosts[i]); }
-
+        }else{
+            //cpu protection : we prevent the loop from running at full throttle 
+            nanosleep(&(struct timespec){0,10000000},NULL);
+        }
         is_first = 0;
-        sleep(config.collect_local ? 2 : 5);
+        //sleep(config.collect_local ? 2 : 5); deprecated : we now use a non-blocking stopwatch in order to still catch inputs
     }
 
 }

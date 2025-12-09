@@ -41,6 +41,8 @@ typedef struct {
     int cli_host_defined; // Flag pour savoir si -s ou -l a été utilisé
 } ManagerConfig;
 
+
+
 // --- Prototypes des fonctions ---
 
 void manager_run(int argc, char *argv[]);
@@ -48,5 +50,8 @@ void manager_print_help(void);
 void manager_ask_input(const char *prompt, char *buffer, size_t size);
 int check_file_permissions(const char *path);
 void parse_config_file(const char *path, ManagerConfig *cfg);
+
+void stopwatch_init(time_t *lasttime);
+int refresh_check(time_t *lasttime, int sec_interval);
 
 #endif

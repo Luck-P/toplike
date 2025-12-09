@@ -1,3 +1,7 @@
 #file that are ignored 
 
 .vscode/
+multirunner.sh
+my_top
+obj/
+
