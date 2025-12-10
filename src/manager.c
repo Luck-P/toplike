@@ -241,6 +241,7 @@ void manager_run(int argc, char *argv[]) {
     // Initialisation UI
     //ui_init(); ncurses 
     
+    
     // Initialisation des états (variables statiques et tableaux)
     ProcessInfo local_procs[MAX_PROCESSES];
     static unsigned long prev_times[MAX_PID] = {0};

@@ -119,7 +119,7 @@ int read_user(const char *pid_str, ProcessInfo *info) {
 }
 
 
-// 2. get_mem_total (Renommée)
+// 2. get_mem_total
 unsigned long process_get_mem_total() {
     FILE *f = fopen("/proc/meminfo", "r");
     if (!f) return 0;
@@ -132,7 +132,7 @@ unsigned long process_get_mem_total() {
     return mem_total_kb * 1024; // Convertir KiB en octets
 }
 
-// 3. get_total_cpu_time (Renommée)
+// 3. get_total_cpu_time 
 unsigned long long process_get_total_cpu_time() {
     FILE *f = fopen("/proc/stat", "r");
     if (!f) return 0;
