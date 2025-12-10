@@ -33,7 +33,7 @@ const char *optstring = "hdc:t:P:l:s:u:p:a";
 
 
 void manager_print_help(void) {
-    printf("Usage: my_top [OPTIONS]\n");
+    printf("Usage: my_htop [OPTIONS]\n");
     printf("\nOptions de base:\n");
     printf("  -h, --help                 Affiche l'aide et quitte.\n");
     printf("  --dry-run                  Test de connexion (local et distant) sans lancer l'interface.\n");
@@ -49,6 +49,16 @@ void manager_print_help(void) {
     printf("  -p, --password PASS        Spécifie le mot de passe pour la connexion (si non demandé interactivement).\n");
     printf("  -t, --connexion-type TYPE  Spécifie le type de connexion à utiliser (ssh, telnet).\n");
     printf("  -P, --port PORT            Spécifie le port à utiliser pour la connexion (par défaut: 22 pour SSH).\n");
+    
+    printf("\nContrôles des processus dans l'interface graphique\n");
+    printf("\t<q>       quitte le programme\n");
+    printf("\t<c>       ligne de commande : \n");
+    printf("\t\thelp, h     affiche les commandes disponibles\n");
+    printf("\t\tquit, q     quitte le programme\n");
+    printf("\t\tkill <pid>      termine le processus <pid>\n");
+    printf("\t\tpause <pid>     met en pause le processus <pid>\n");
+    printf("\t\tresume <pid>    relance le processus <pid>\n");
+    printf("\t\trestart <pid>   redemarre le processus <pid> si ce dernier le permet\n");
     printf("\n");
 }
 
