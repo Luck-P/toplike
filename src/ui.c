@@ -9,7 +9,7 @@
 #include "process.h"
 #include "ui.h" 
 
-void command_handling(char*);
+int command_handling(char*);
 void trim_newline(char*);
 
 // 1. format_size 
@@ -113,6 +113,7 @@ int keyhit_check(void){
 
 //key logic 
 int input_handling(char inputed){
+    int ch_out;
     switch(inputed){
         case 'q': {
             exit(0); //thanks to atexit(), automatic fallback to canonical mode 
@@ -123,14 +124,14 @@ int input_handling(char inputed){
             char user_command[256];
             printf(" > ");
             fgets(user_command,sizeof(user_command),stdin);
-            command_handling(user_command);
+            ch_out = command_handling(user_command);
             break;
         }
     }
     return 0;
 }
 
-void command_handling(char *command){
+int command_handling(char *command){
     //underlying logic for a user's written command
     /*printf("the given command was : %s",command);
     sleep(3);*/
@@ -152,6 +153,18 @@ void command_handling(char *command){
         //action checking
         /*printf("action checking");
         getchar();*/
+        if(strcomp(action,"sort")==0){
+            char *crit = strtok(NULL," \n\t");
+            int intcode;
+            if(!crit){
+                printf("error : give a valid sorting criteria");
+                goto out; 
+            }else if(strcomp(crit,"ram")){
+                intcode = 1;
+            } 
+
+            
+        }
         int ksignal = 0;
         if(strcmp(action,"kill")==0){
             ksignal = SIGTERM;
@@ -192,7 +205,7 @@ void command_handling(char *command){
     out:
     printf("\n\t--- press enter to continue ---");
     getchar();
-    return;
+    return 0;
 }
 
 // generic 

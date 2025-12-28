@@ -2,6 +2,7 @@
 
 .vscode/
 multirunner.sh
+deprec_exe
 my_top
 obj/
 
