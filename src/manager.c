@@ -315,7 +315,7 @@ void manager_run(int argc, char *argv[]) {
         term_toggle(1);
         //vérification du buffer keyhit_check() - 0 = vide / 1 = non-vide
         if(!keyhit_check()){
-            if(is_first || refresh_check(last_time,config.collect_local ? 2 : 5)){
+            if(is_first || refresh_check(last_time,2)){
                 int count = 0;
                 // Collecte Locale
                 if (config.collect_local && display_source==-1) {
