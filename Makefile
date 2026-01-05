@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
+LDLIBS = -lssh	
 SRC_DIR = src
 OBJ_DIR = obj
 BIN = my_htop
@@ -14,7 +15,7 @@ all: $(BIN)
 
 # Création de l'exécutable
 $(BIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 # Compilation des objets
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)

@@ -10,7 +10,7 @@
 #include "manager.h"
 #include "process.h"
 #include "ui.h"
-
+#include "network.h"
 
 // Options pour getopt_long (La même structure complète)
 static struct option long_options[] = {
@@ -18,7 +18,7 @@ static struct option long_options[] = {
     {"help", no_argument, 0, 'h'},
     {"dry-run", no_argument, 0, 'd'},
     {"remote-config", required_argument, 0, 'c'},
-    {"connexion-type", required_argument, 0, 't'},
+    //{"connexion-type", required_argument, 0, 't'}, nous n'utilisons que le ssh 
     {"port", required_argument, 0, 'P'},
     {"login", required_argument, 0, 'l'},
     {"remote-server", required_argument, 0, 's'},
@@ -47,11 +47,15 @@ void manager_print_help(void) {
     printf("\nOptions de connexion détaillées:\n");
     printf("  -u, --username USER        Spécifie le nom d'utilisateur pour la connexion (si non fourni par -l).\n");
     printf("  -p, --password PASS        Spécifie le mot de passe pour la connexion (si non demandé interactivement).\n");
-    printf("  -t, --connexion-type TYPE  Spécifie le type de connexion à utiliser (ssh, telnet).\n");
+    //printf("  -t, --connexion-type TYPE  Spécifie le type de connexion à utiliser (ssh, telnet).\n");
     printf("  -P, --port PORT            Spécifie le port à utiliser pour la connexion (par défaut: 22 pour SSH).\n");
     
     printf("\nContrôles des processus dans l'interface graphique\n");
     printf("\t<q>       quitte le programme\n");
+    
+    printf("\t<m>       trier par taux d'occupation de la mémoire vive\n");
+    printf("\t<p>       trier par taux d'utilisation CPU\n");
+    printf("\t<r>       passe à la machine suivante (avec l'option -a)\n");
     printf("\t<c>       ligne de commande : \n");
     printf("\t\thelp, h     affiche les commandes disponibles\n");
     printf("\t\tquit, q     quitte le programme\n");
@@ -138,7 +142,7 @@ void manager_run(int argc, char *argv[]) {
             case 'd': config.dry_run = 1; break;
             case 'a': option_all = 1; break;
             case 'c': strncpy(config.cli_config_file, optarg, MAX_PATH_LEN - 1); break;
-            case 't': strncpy(config.cli_host.connection_type, optarg, 9); break;
+            //case 't': strncpy(config.cli_host.connection_type, optarg, 9); break;
             case 'P': config.cli_host.port = atoi(optarg); break;
             case 'u': strncpy(config.cli_host.username, optarg, MAX_USER_LEN - 1); break;
             case 'p': strncpy(config.cli_host.password, optarg, MAX_PASS_LEN - 1); break;
@@ -156,6 +160,7 @@ void manager_run(int argc, char *argv[]) {
                     strncpy(config.cli_host.address, at + 1, MAX_HOST_LEN - 1);
                     if (config.cli_host.display_name[0] == '\0')
                         strcpy(config.cli_host.display_name, at + 1);
+                    
                 } else {
                      fprintf(stderr, "Format invalide pour -l. Attendu: user@host\n");
                      exit(EXIT_FAILURE);
@@ -200,7 +205,7 @@ void manager_run(int argc, char *argv[]) {
         if (config.cli_host.password[0] == '\0') {
             manager_ask_input("Mot de passe: ", config.cli_host.password, MAX_PASS_LEN);
         }
-
+        config.cli_host.enabled = 1;
         // Ajout à la liste des hôtes
         if (config.host_count < MAX_HOSTS) {
             config.hosts[config.host_count++] = config.cli_host;
@@ -262,6 +267,45 @@ void manager_run(int argc, char *argv[]) {
 
     SortMode current_mode = SORT_CPU;
 
+    //initialisation de la session distante 
+    ssh_session remote_sessions[MAX_HOSTS] = {0};
+    int active_rem_hosts=0;
+    
+    /*gestion des sessions : 
+        -1  : processes locaux 
+        0   : processes de la session distante n°1
+        1   : processes de la session distante n°2 
+        etc 
+    */
+
+    int display_source=-1;
+    if (!config.collect_local && config.collect_remote) {
+        display_source = 0; //remote seulement -> nous n'affichons pas les processus locaux
+    }
+
+
+    if(config.collect_remote){
+        printf("connexion à la machine distante...\n");
+        for(int i=0; i<config.host_count; i++) {
+            if (network_connect(&config.hosts[i], &remote_sessions[i]) != 0) {
+                 printf("Connexion échouée vers %s\n", config.hosts[i].display_name);
+                 config.hosts[i].enabled = 0; // Disable this host
+            }else{
+                printf("Connexion réussie vers %s\n", config.hosts[i].display_name);
+                
+                active_rem_hosts++;
+            }
+        }   
+    }
+    if (active_rem_hosts == 0 && !config.collect_local) {
+        fprintf(stderr, "\nAucune connexion active - presser une touche pour quitter \n");
+        getchar();
+        exit(EXIT_FAILURE);
+    }
+    if (active_rem_hosts < config.host_count) {
+        sleep(2);   //si une connexion ssh a échoué, l'utilisateur a le temps de lire l'erreur avant que le programme ne poursuive
+    }
+
         while (1) {
         //entrée dans la boucle -> passage clavier mode RAW
         term_toggle(1);
@@ -270,16 +314,47 @@ void manager_run(int argc, char *argv[]) {
             if(is_first || refresh_check(last_time,config.collect_local ? 2 : 5)){
                 int count = 0;
                 // Collecte Locale
-                if (config.collect_local) {
+                if (config.collect_local && display_source==-1) {
                     unsigned long long curr_total = process_get_total_cpu_time();
                     count = process_collect_all(local_procs, MAX_PROCESSES, prev_total_cpu, prev_times, curr_total);
                     process_sort(local_procs, count, current_mode);
                     prev_total_cpu = curr_total;
-             
+                    system("clear"); 
+                    if(config.collect_remote) printf("[ LOCAL ]\n");
                     ui_refresh_process_list(local_procs, count, is_first);
                 }
         
-            // Collecte Distante (Placeholder)
+            // Collecte Distante 
+                if (config.collect_remote && display_source>=0 && display_source<config.host_count){ //remote seule 
+                    if (config.hosts[display_source].enabled) {
+                        ProcessInfo remote_procs[MAX_PROCESSES];
+                        int r_count = network_collect(remote_sessions[display_source], remote_procs, MAX_PROCESSES);
+                        
+                        if (r_count > 0) {
+                            process_sort(remote_procs, r_count, current_mode);
+                            
+                            // Display Header for Remote
+                            system("clear");
+                            printf(" [ REMOTE: %s ]\n", config.hosts[display_source].display_name);
+                            ui_refresh_process_list(remote_procs, r_count, is_first);
+                        } else {
+                           printf("Waiting for data from %s...\n", config.hosts[display_source].display_name);
+                        }
+                    } else {
+                        printf("Host %s is disconnected.\n", config.hosts[display_source].display_name);
+                    }
+                    /*for(int i=0; i<config.host_count; i++) {
+                        if (!config.hosts[i].enabled) continue;
+
+                        ProcessInfo remote_procs[MAX_PROCESSES];
+                        int r_count = network_collect(remote_sessions[i], remote_procs, MAX_PROCESSES);
+                        process_sort(local_procs, count, current_mode);
+                        if (r_count > 0) {
+                           ui_refresh_process_list(remote_procs, r_count, is_first);
+                        }
+                    }*/
+                }
+
             // for(int i=0; i<config.host_count; i++) { network_collect(&config.hosts[i]); }
             }else{
                 //cpu protection : we prevent the loop from running at full throttle 
@@ -290,17 +365,52 @@ void manager_run(int argc, char *argv[]) {
         }else{
             char pressed = getchar();
             
-            if (pressed == 'm') {
-                current_mode = SORT_MEM;
-                *last_time = 0;
-            }
-            if (pressed == 'p') {
-                current_mode = SORT_CPU;
-                *last_time = 0;
+            switch(pressed){
+                case 'm': {
+                    current_mode = SORT_MEM;
+                    *last_time = 0;
+                    break;
+                }
+                case 'p':{
+                    current_mode = SORT_CPU;
+                    *last_time = 0;
+                    break;
+                }
+                case 'r':{
+                    display_source++;
+                    if(display_source>=config.host_count){
+                        display_source = (config.collect_local) ? -1 : 0;
+                    }
+                    *last_time=0; //réinitialise last_time pour déclencher le rafraîchissement
+                    break;
+                }
+                case 'q': {
+                    exit(0); //thanks to atexit(), automatic fallback to canonical mode 
+                    break;
+                }
+                case 'c': {
+                    term_toggle(0);
+                    char user_command[256];
+                    printf(" > ");
+                    fgets(user_command,sizeof(user_command),stdin);
+                    if (display_source!=-1){ //nous sommes sur une session à distance : l'emission de signal kill() est gérée dans network.c
+                        ssh_session target_session = remote_sessions[display_source];
+                        remote_command_handling(target_session,user_command);
+                    }else{
+                        command_handling(user_command);
+                    }
+                    
+                    break;
+                }
+
             }
 
-            input_handling(pressed);
-            /*printf("test : %c",test);
+            
+            /*else{
+                input_handling(pressed);
+            } -> unification de la logique dans manager.c 
+            
+            printf("test : %c",test);
             //key handling
             getchar();*/
         }

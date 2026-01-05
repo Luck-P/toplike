@@ -58,7 +58,7 @@ void print_process(const ProcessInfo *info, int is_initial_run) {
 }
 
 void ui_refresh_process_list(ProcessInfo processes[], int count, int is_initial_run) {
-    system("clear"); 
+    //system("clear"); la gestion de l'effaçage est désormais gérée dans manager.c afin de manipuler sans problème les différents headers possibles
     print_header();
     for (int i = 0; i < count; i++) {
         print_process(&processes[i], is_initial_run);
@@ -112,8 +112,8 @@ int keyhit_check(void){
 }
 
 //key logic 
-int input_handling(char inputed){
-    int ch_out;
+/*int input_handling(char inputed){
+    
     switch(inputed){
         case 'q': {
             exit(0); //thanks to atexit(), automatic fallback to canonical mode 
@@ -124,12 +124,13 @@ int input_handling(char inputed){
             char user_command[256];
             printf(" > ");
             fgets(user_command,sizeof(user_command),stdin);
-            ch_out = command_handling(user_command);
+            command_handling(user_command);
             break;
         }
     }
     return 0;
-}
+}                   ---> deprecated : nous gérons les inputs clavier dans manager.c / l'invite de commande dépend désormais du status distant ou non de la session en cours 
+    */ 
 
 int command_handling(char *command){
     //underlying logic for a user's written command
@@ -137,7 +138,7 @@ int command_handling(char *command){
     sleep(3);*/
     
     char *action = strtok(command," \n\t");
-    if(!action){return;}
+    if(!action){return 0;}
 
     //this is were it breaks
 
@@ -153,7 +154,7 @@ int command_handling(char *command){
         //action checking
         /*printf("action checking");
         getchar();*/
-        if(strcomp(action,"sort")==0){
+        /*if(strcomp(action,"sort")==0){
             char *crit = strtok(NULL," \n\t");
             int intcode;
             if(!crit){
@@ -162,9 +163,11 @@ int command_handling(char *command){
             }else if(strcomp(crit,"ram")){
                 intcode = 1;
             } 
-
-            
+                >>> deprecated
         }
+        */
+            
+        
         int ksignal = 0;
         if(strcmp(action,"kill")==0){
             ksignal = SIGTERM;

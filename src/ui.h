@@ -14,7 +14,7 @@ void term_toggle(int mode);
 int keyhit_check(void);
 
 //gestion inputs 
-int input_handling(char);
+int command_handling(char*);
 
 
 #endif

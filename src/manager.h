@@ -6,7 +6,7 @@
 
 // --- Constantes Générales ---
 #define MAX_HOSTS 10
-#define MAX_NAME_LEN 64
+#define MAX_NAME_LEN 256
 #define MAX_HOST_LEN 256
 #define MAX_USER_LEN 64
 #define MAX_PASS_LEN 64
