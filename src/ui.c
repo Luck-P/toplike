@@ -12,7 +12,7 @@
 int command_handling(char*);
 void trim_newline(char*);
 
-// 1. format_size 
+// format_size 
 void format_size(unsigned long bytes, char *buf, size_t buf_size) {
     if (bytes >= 1024UL * 1024UL * 1024UL) {
         snprintf(buf, buf_size, "%.1fG", bytes / (1024.0 * 1024.0 * 1024.0));
@@ -25,13 +25,13 @@ void format_size(unsigned long bytes, char *buf, size_t buf_size) {
     }
 }
 
-// 2. print_header
+// print_header
 void print_header() {
     printf("%-6s %-17s %-4s %-4s %-10s %-10s %-10s %-3s %-6s %-6s %-10s %-20s\n",
            "PID", "USER", "PRI", "NI", "VIRT", "RES", "SHR", "S", "MEM%", "CPU%", "TIME", "CMD");
 }
 
-// 3. print_process
+// print_process
 void print_process(const ProcessInfo *info, int is_initial_run) {
     char virt_buf[16], res_buf[16], shr_buf[16];
     format_size(info->virt, virt_buf, sizeof(virt_buf));

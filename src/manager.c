@@ -108,10 +108,13 @@ void parse_config_file(const char *path, ManagerConfig *cfg) {
 }
 
 //fonction gestion du rafraichissement
+//Chronomètre :
+// Mémorise l'heure de départ
 void stopwatch_init(time_t *lasttime) {
     *lasttime = time(NULL);
 }
 
+// Refresh si on a atteint le temps de refresh demandé
 int refresh_check(time_t *lasttime, int sec_interval){
     time_t cur_time = time(NULL);
     if (difftime(cur_time, *lasttime) >= sec_interval){
@@ -267,6 +270,7 @@ void manager_run(int argc, char *argv[]) {
 
     SortMode current_mode = SORT_CPU;
 
+<<<<<<< HEAD
     //initialisation de la session distante 
     ssh_session remote_sessions[MAX_HOSTS] = {0};
     int active_rem_hosts=0;
@@ -307,6 +311,9 @@ void manager_run(int argc, char *argv[]) {
     }
 
         while (1) {
+=======
+    while (1) {
+>>>>>>> a931d31 (ajustement + commentaire)
         //entrée dans la boucle -> passage clavier mode RAW
         term_toggle(1);
         //vérification du buffer keyhit_check() - 0 = vide / 1 = non-vide
@@ -365,6 +372,7 @@ void manager_run(int argc, char *argv[]) {
         }else{
             char pressed = getchar();
             
+<<<<<<< HEAD
             switch(pressed){
                 case 'm': {
                     current_mode = SORT_MEM;
@@ -404,6 +412,10 @@ void manager_run(int argc, char *argv[]) {
                 }
 
             }
+=======
+            if (pressed == 'm') current_mode = SORT_MEM;
+            if (pressed == 'p') current_mode = SORT_CPU;
+>>>>>>> a931d31 (ajustement + commentaire)
 
             
             /*else{
